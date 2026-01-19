@@ -8,6 +8,18 @@ def run_command(command):
         print("Command failed:", " ".join(command))
         sys.exit(1);
 
+def capture(command):
+    try:
+        result = subprocess.run(
+            command, 
+            capture_output=True,
+            text=True
+        )
+        return result.stdout.strip()
+    except subprocess.CalledProcessError:
+        print("Command failed:", " ".join(command))
+        sys.exit(1);
+
 
 def main():
     print("Running cnp (Commit and Push)")
@@ -22,9 +34,12 @@ def main():
 
     run_command(["git", "commit", "-m", message])
 
-    run_command(["git", "push", "-u", "origin", "main"])
+
+    detect_branch = capture(["git", "branch", "--show-current"])
+
+    run_command(["git", "push", "-u", "origin", detect_branch])
 
     print("Done!")
-
+    
 if __name__ == "__main__":
     main()
