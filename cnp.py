@@ -25,12 +25,23 @@ def main():
     print("Running cnp (Commit and Push)")
     run_command(["git", "add", "."])
 
-    message = input("Enter your commit message: ").strip()
+    while(True):
+        message = input("Enter your commit message: ").strip()
+
+        if not message:
+            print("Commit message cannot be empty")
+            continue
+        print(f"Commit message: {message}") 
+
+        confirm = input("Confirm commit message(y/n): ").lower()
+        if confirm=="y":
+            break;
+        elif confirm=='n':
+            print("Re-enter commit message")
+        else:
+            print("Please enter 'y' or 'n'\n")
 
 
-    if not message:
-        print("Commit message cannot be empty")
-        sys.exit(1)
 
     run_command(["git", "commit", "-m", message])
 
