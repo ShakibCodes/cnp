@@ -24,6 +24,9 @@ def capture(command):
 def main():
     print("Running cnp (Commit and Push)")
     run_command(["git", "add", "."])
+    
+    ab = capture(["git", "diff", "--staged"]) # this is dummy and currently Experimental
+ 
 
     while(True):
         message = input("Enter your commit message: ").strip()
