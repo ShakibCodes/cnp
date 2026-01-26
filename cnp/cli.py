@@ -5,6 +5,9 @@ from InquirerPy import prompt
 
 from .git_ops import run_command, capture
 from .init import init_command, config_command
+from .config import load_config
+from .llm import generate_commit_message
+
 
 console = Console()
 
@@ -30,29 +33,64 @@ def main():
     with console.status("[bold green]Running git add .[/bold green]"):
         run_command(["git", "add", "."])
 
-    capture(["git", "diff", "--staged"])
+    diff = capture(["git", "diff", "--staged"])
+    config = load_config()
+    llm_enabled = config and config.get("llm", {}).get("enabled", False)
 
-    while True:
-        message = prompt([
-            {
-                "type": "input",
-                "name": "msg",
-                "message": "Enter your commit message:",
-                "validate": lambda x: len(x.strip()) > 0
-            }
-        ])["msg"]
+    if llm_enabled:
+        api_key = config["llm"]["api_key"]
 
-        confirm = prompt([
-            {
-                "type": "confirm",
-                "name": "ok",
-                "message": "Confirm commit message?",
-                "default": True
-            }
-        ])["ok"]
+        try:
+            with console.status("[bold cyan]Generating commit message with AI...[/bold cyan]"):
+                message = generate_commit_message(diff, api_key)
 
-        if confirm:
-            break
+            console.print(f"\n[bold]AI commit message:[/bold] {message}\n")
+
+            use_ai = prompt([
+                {
+                    "type": "confirm",
+                    "name": "ok",
+                    "message": "Use this commit message?",
+                    "default": True
+                }
+            ])["ok"]
+
+            if not use_ai:
+                raise Exception("User rejected AI message")
+
+        except Exception:
+            message = prompt([
+                {
+                    "type": "input",
+                    "name": "msg",
+                    "message": "Enter commit message manually:",
+                    "validate": lambda x: len(x.strip()) > 0
+                }
+            ])["msg"]
+
+    else:
+        while True:
+            message = prompt([
+                {
+                    "type": "input",
+                    "name": "msg",
+                    "message": "Enter your commit message:",
+                    "validate": lambda x: len(x.strip()) > 0
+                }
+            ])["msg"]
+
+            confirm = prompt([
+                {
+                    "type": "confirm",
+                    "name": "ok",
+                    "message": "Confirm commit message?",
+                    "default": True
+                }
+            ])["ok"]
+
+            if confirm:
+                break
+
 
     run_command(["git", "commit", "-m", message])
 

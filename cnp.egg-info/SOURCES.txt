@@ -4,6 +4,7 @@ cnp/cli.py
 cnp/config.py
 cnp/git_ops.py
 cnp/init.py
+cnp/llm.py
 cnp.egg-info/PKG-INFO
 cnp.egg-info/SOURCES.txt
 cnp.egg-info/dependency_links.txt
