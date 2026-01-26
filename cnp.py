@@ -1,59 +1,90 @@
 import subprocess
 import sys
+from rich.console import Console
+from rich.panel import Panel
+from InquirerPy import prompt
+
+console = Console()
+
 
 def run_command(command):
     try:
         subprocess.run(command, check=True)
     except subprocess.CalledProcessError:
-        print("Command failed:", " ".join(command))
-        sys.exit(1);
+        console.print(
+            f"[bold red]Command failed:[/bold red] {' '.join(command)}"
+        )
+        sys.exit(1)
+
 
 def capture(command):
     try:
         result = subprocess.run(
-            command, 
+            command,
             capture_output=True,
-            text=True
+            text=True,
+            check=True
         )
         return result.stdout.strip()
     except subprocess.CalledProcessError:
-        print("Command failed:", " ".join(command))
-        sys.exit(1);
+        console.print(
+            f"[bold red]Command failed:[/bold red] {' '.join(command)}"
+        )
+        sys.exit(1)
 
 
 def main():
-    print("Running cnp (Commit and Push)")
-    run_command(["git", "add", "."])
-    
-    ab = capture(["git", "diff", "--staged"]) # this is dummy and currently Experimental
- 
+    console.print(
+        Panel.fit(
+            "[bold cyan]CNP[/bold cyan]\n[dim]Commit and Push[/dim]",
+            border_style="cyan"
+        )
+    )
 
-    while(True):
-        message = input("Enter your commit message: ").strip()
+    with console.status("[bold green]Running git add .[/bold green]"):
+        run_command(["git", "add", "."])
 
-        if not message:
-            print("Commit message cannot be empty")
-            continue
-        print(f"Commit message: {message}") 
+    # unchanged (still experimental / unused)
+    ab = capture(["git", "diff", "--staged"])
 
-        confirm = input("Confirm commit message(y/n): ").lower()
-        if confirm=="y":
-            break;
-        elif confirm=='n':
-            print("Re-enter commit message")
+    while True:
+        message = prompt([
+            {
+                "type": "input",
+                "name": "msg",
+                "message": "Enter your commit message:",
+                "validate": lambda x: len(x.strip()) > 0
+            }
+        ])["msg"].strip()
+
+        console.print(f"\n[bold]Commit message:[/bold] {message}\n")
+
+        confirm = prompt([
+            {
+                "type": "confirm",
+                "name": "ok",
+                "message": "Confirm commit message?",
+                "default": True
+            }
+        ])["ok"]
+
+        if confirm:
+            break
         else:
-            print("Please enter 'y' or 'n'\n")
+            console.print("[yellow]Re-enter commit message[/yellow]\n")
 
-
-
-    run_command(["git", "commit", "-m", message])
-
+    with console.status("[bold cyan]Creating commit...[/bold cyan]"):
+        run_command(["git", "commit", "-m", message])
 
     detect_branch = capture(["git", "branch", "--show-current"])
 
-    run_command(["git", "push", "-u", "origin", detect_branch])
+    with console.status(
+        f"[bold cyan]Pushing to origin/{detect_branch}...[/bold cyan]"
+    ):
+        run_command(["git", "push", "-u", "origin", detect_branch])
 
-    print("Done!")
-    
+    console.print("[bold green]✔ Done![/bold green]")
+
+
 if __name__ == "__main__":
     main()
