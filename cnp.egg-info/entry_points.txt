@@ -1,0 +1,2 @@
+[console_scripts]
+cnp = cnp.cli:main

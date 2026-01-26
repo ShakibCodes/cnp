@@ -1,0 +1,7 @@
+[project]
+name = "cnp"
+version = "0.1.0"
+dependencies = ["rich", "inquirerpy"]
+
+[project.scripts]
+cnp = "cnp.cli:main"
